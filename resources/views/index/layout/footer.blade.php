@@ -83,27 +83,9 @@
               </li>
             </ul>
 
-            <div class="footer-live-badge">
-              <span class="badge-dot"></span>
-              <span class="badge-lead">Live Virtual Cohorts</span>
-              <span class="badge-sub">• Open for Admissions</span>
-            </div>
           </div>
         </div>
 
-      </div>
-    </div>
-  </div>
-
-  <!-- Institutional Disclaimer Strip -->
-  <div class="footer-disclaimer-strip-box">
-    <div class="auto-container">
-      <div class="disclaimer-strip-card">
-        <div class="disclaimer-badge-pill">Disclaimer</div>
-        <div class="disclaimer-strip-text">
-          The views expressed by guest poets, writers, and academicians in our workshops and lectures are solely their own. ICRW does not endorse and is not responsible for their personal opinions, beliefs, or ideologies.
-          <a href="javascript:void(0)" onclick="openDisclaimerModal()" class="disclaimer-strip-link">Read Full Academic Policy &amp; Disclaimers →</a>
-        </div>
       </div>
     </div>
   </div>
