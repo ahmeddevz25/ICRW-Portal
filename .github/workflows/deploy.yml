@@ -1,0 +1,99 @@
+name: ICRW Portal CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  # =========================================================================
+  # STAGE 1: CI (Quality Checks, Syntax Validation & Tests)
+  # Agar koi bhi issue aya to pipeline STOP ho jayegi aur code deploy NAHI hoga.
+  # =========================================================================
+  tests:
+    name: Run Quality Checks & Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP Environment
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_mysql, bcmath, curl
+          coverage: none
+
+      - name: Validate composer.json
+        run: composer validate --strict
+
+      - name: Cache Composer Dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: Install Composer Dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Copy .env.example
+        run: php -r "file_exists('.env') || copy('.env.example', '.env');"
+
+      - name: Generate Application Key
+        run: php artisan key:generate
+
+      - name: Check PHP Syntax (Linter)
+        run: |
+          find app routes config resources -name "*.php" -exec php -l {} +
+
+      - name: Run Tests
+        run: php artisan test --env=testing
+
+  # =========================================================================
+  # STAGE 2: CD (Automated Deployment to Server)
+  # Yeh tabhi chalega jab STAGE 1 ke tamam tests aur checks 100% PASS honge.
+  # =========================================================================
+  deploy:
+    name: Deploy to Server
+    needs: tests
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP for Production Build
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_mysql, bcmath, curl
+          coverage: none
+
+      - name: Install Production Dependencies (No Dev)
+        run: composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
+
+      - name: Deploy to Server via FTP / FTPS
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: ${{ secrets.FTP_SERVER_DIR || 'public_html/' }}
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            .env
+            .env.backup
+            .env.production
+            tests/**
+            phpunit.xml
+            README.md
+            client req.txt
