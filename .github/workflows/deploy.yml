@@ -72,16 +72,6 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup PHP for Production Build
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.3'
-          extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_mysql, bcmath, curl
-          coverage: none
-
-      - name: Install Production Dependencies (No Dev)
-        run: composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
-
       - name: Deploy to Server via FTP / FTPS
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
@@ -93,6 +83,10 @@ jobs:
             **/.git*
             **/.git*/**
             **/node_modules/**
+            **/node_modules*/**
+            **/vendor/**
+            **/vendor*/**
+            vendor/**
             .env
             .env.backup
             .env.production
@@ -100,4 +94,5 @@ jobs:
             phpunit.xml
             README.md
             client req.txt
+            *.zip
 
