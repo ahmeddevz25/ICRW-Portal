@@ -508,21 +508,57 @@
     }
   });
 
-  // Smooth scroll with fixed header offset for hash anchors
+  // Universal smooth scroll with fixed header offset for hash anchors
+  function smoothScrollToTarget(targetId) {
+    try {
+      var target = document.querySelector(targetId);
+      if (!target) return;
+      var header = document.querySelector('.main-header');
+      var offset = (header ? header.offsetHeight : 88) + 16;
+      var top = target.getBoundingClientRect().top + window.pageYOffset - offset;
+      window.scrollTo({
+        top: Math.max(0, top),
+        behavior: 'smooth'
+      });
+    } catch (err) {
+      // Ignore invalid selectors
+    }
+  }
+
+  // Intercept in-page hash anchor clicks for smooth scroll without page reload
+  document.addEventListener('click', function(e) {
+    var link = e.target.closest('a');
+    if (!link) return;
+    var href = link.getAttribute('href');
+    if (!href) return;
+
+    var hashIndex = href.indexOf('#');
+    if (hashIndex !== -1) {
+      var hash = href.substring(hashIndex);
+      if (hash.length > 1 && hash !== '#') {
+        var path = href.substring(0, hashIndex);
+        var currentPath = window.location.pathname;
+        var currentHref = window.location.href.split('#')[0];
+
+        if (!path || path === currentPath || path === currentPath.replace(/\/$/, '') || currentHref.endsWith(path)) {
+          var target = document.querySelector(hash);
+          if (target) {
+            e.preventDefault();
+            if (history.pushState) {
+              history.pushState(null, null, hash);
+            }
+            smoothScrollToTarget(hash);
+          }
+        }
+      }
+    }
+  });
+
   window.addEventListener('DOMContentLoaded', function() {
     if (window.location.hash) {
-      var target = document.querySelector(window.location.hash);
-      if (target) {
-        setTimeout(function() {
-          var header = document.querySelector('.main-header');
-          var offset = (header ? header.offsetHeight : 88) + 20;
-          var top = target.getBoundingClientRect().top + window.pageYOffset - offset;
-          window.scrollTo({
-            top: Math.max(0, top),
-            behavior: 'smooth'
-          });
-        }, 250);
-      }
+      setTimeout(function() {
+        smoothScrollToTarget(window.location.hash);
+      }, 350);
     }
   });
 </script>

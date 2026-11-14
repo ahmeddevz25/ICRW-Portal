@@ -20,17 +20,17 @@
     <div class="nav-outer">
       <nav class="nav main-menu">
         <ul class="navigation">
-          <li class="{{ request()->routeIs('home') ? 'current' : '' }}"><a href="{{ route('home') }}">Home</a></li>
-          <li><a href="{{ route('home') }}#about">About Us</a></li>
+          <li class="{{ request()->routeIs('home') ? 'current' : '' }}"><a href="{{ route('home') }}/">Home</a></li>
+          <li><a href="{{ request()->routeIs('home') ? '#about' : route('home').'/#about' }}">About Us</a></li>
           <li class="{{ request()->routeIs('faculty') ? 'current' : '' }}"><a href="{{ route('faculty') }}">Faculty</a></li>
-          <li><a href="{{ route('home') }}#elibrary-section">E-Library</a></li>
-          <li><a href="{{ route('home') }}#certification">Verification</a></li>
+          <li><a href="{{ request()->routeIs('home') ? '#elibrary-section' : route('home').'/#elibrary-section' }}">E-Library</a></li>
+          <li><a href="{{ request()->routeIs('home') ? '#certification' : route('home').'/#certification' }}">Verification</a></li>
         </ul>
       </nav>
 
       <!-- Outer Box (Auth Buttons & Mobile Toggler) -->
       <div class="outer-box">
-        <a href="{{ route('home') }}#single-workshop" class="header-cta-btn d-none d-xl-inline-flex">
+        <a href="{{ request()->routeIs('home') ? '#single-workshop' : route('home').'/#single-workshop' }}" class="header-cta-btn d-none d-xl-inline-flex">
           Upcoming Workshop
         </a>
         <div class="header-nav-divider d-none d-xl-block"></div>
@@ -81,11 +81,11 @@
 
       <ul class="navigation clearfix">
         <li><a href="javascript:void(0)" onclick="closeMobileMenu(); openStudentPortal();" style="color: var(--icrw-gold) !important; font-weight: 700;"><i class="fa-solid fa-video me-1"></i> Live Zoom &amp; Recordings</a></li>
-        <li><a href="{{ route('home') }}" onclick="closeMobileMenu()">Home</a></li>
-        <li><a href="{{ route('home') }}#about" onclick="closeMobileMenu()">About Us</a></li>
+        <li><a href="{{ route('home') }}/" onclick="closeMobileMenu()">Home</a></li>
+        <li><a href="{{ request()->routeIs('home') ? '#about' : route('home').'/#about' }}" onclick="closeMobileMenu()">About Us</a></li>
         <li><a href="{{ route('faculty') }}" onclick="closeMobileMenu()">Faculty &amp; Leadership</a></li>
-        <li><a href="{{ route('home') }}#elibrary-section" onclick="closeMobileMenu()">E-Library</a></li>
-        <li><a href="{{ route('home') }}#certification" onclick="closeMobileMenu()">Certificate Verification</a></li>
+        <li><a href="{{ request()->routeIs('home') ? '#elibrary-section' : route('home').'/#elibrary-section' }}" onclick="closeMobileMenu()">E-Library</a></li>
+        <li><a href="{{ request()->routeIs('home') ? '#certification' : route('home').'/#certification' }}" onclick="closeMobileMenu()">Certificate Verification</a></li>
       </ul>
       <ul class="contact-list-one">
         <li>

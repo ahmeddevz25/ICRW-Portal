@@ -39,12 +39,12 @@
           <div class="footer-widget">
             <h4 class="footer-widget-heading">Institutional</h4>
             <ul class="footer-links-list">
-              <li><a href="{{ route('home') }}">Home</a></li>
-              <li><a href="{{ route('home') }}#about">About ICRW</a></li>
+              <li><a href="{{ route('home') }}/">Home</a></li>
+              <li><a href="{{ request()->routeIs('home') ? '#about' : route('home').'/#about' }}">About ICRW</a></li>
               <li><a href="{{ route('faculty') }}">Faculty &amp; Leadership</a></li>
               <li><a href="javascript:void(0)" onclick="openFullCatalogModal()">All Upcoming Workshops</a></li>
-              <li><a href="{{ route('home') }}#certification">Verify Certificate</a></li>
-              <li><a href="#home" class="text-gold">Back to Top ↑</a></li>
+              <li><a href="{{ request()->routeIs('home') ? '#certification' : route('home').'/#certification' }}">Verify Certificate</a></li>
+              <li><a href="{{ request()->routeIs('home') ? '#home' : route('home').'/#home' }}" class="text-gold">Back to Top ↑</a></li>
             </ul>
           </div>
         </div>
@@ -103,7 +103,7 @@
           <span class="sep">•</span>
           <a href="javascript:void(0)" onclick="openFullCatalogModal()">Workshops Directory</a>
           <span class="sep">•</span>
-          <a href="{{ route('home') }}#about">About Us</a>
+          <a href="{{ request()->routeIs('home') ? '#about' : route('home').'/#about' }}">About Us</a>
         </div>
       </div>
     </div>
