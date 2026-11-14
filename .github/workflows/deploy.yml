@@ -24,7 +24,7 @@ jobs:
       - name: Setup PHP Environment
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: "8.3"
           extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_mysql, pdo_sqlite, sqlite3, bcmath, curl
           coverage: none
 
@@ -95,4 +95,3 @@ jobs:
             README.md
             client req.txt
             *.zip
-
