@@ -17,3 +17,10 @@ use App\Http\Controllers\HomeController;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/faculty', [HomeController::class, 'faculty'])->name('faculty');
 Route::get('/workshop-details', [HomeController::class, 'workshopDetails'])->name('workshop.details');
+
+// Subfolder /demo support
+Route::prefix('demo')->group(function () {
+    Route::get('/', [HomeController::class, 'index']);
+    Route::get('/faculty', [HomeController::class, 'faculty']);
+    Route::get('/workshop-details', [HomeController::class, 'workshopDetails']);
+});
