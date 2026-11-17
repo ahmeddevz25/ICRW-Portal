@@ -14,8 +14,13 @@ class AdminAuthenticate
      */
     public function handle(Request $request, Closure $next): Response
     {
+        $loginRoute = \Illuminate\Support\Facades\Route::has('login') ? 'login' : 'admin.login';
+
         if (!Auth::check()) {
-            return redirect()->route('admin.login')->with('warning', 'Please sign in to access the ICRW Executive Portal.');
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Unauthenticated.'], 401);
+            }
+            return redirect()->route($loginRoute)->with('warning', 'Please sign in to access the ICRW Executive Portal.');
         }
 
         $user = Auth::user();
@@ -26,7 +31,7 @@ class AdminAuthenticate
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
-            return redirect()->route('admin.login')->with('error', 'Your administrative account has been deactivated. Please contact Super Admin.');
+            return redirect()->route($loginRoute)->with('error', 'Your administrative account has been deactivated. Please contact Super Admin.');
         }
 
         // Check if user has any administrative role
@@ -35,7 +40,7 @@ class AdminAuthenticate
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
-            return redirect()->route('admin.login')->with('error', 'Access restricted. You do not possess administrative privileges.');
+            return redirect()->route($loginRoute)->with('error', 'Access restricted. You do not possess administrative privileges.');
         }
 
         return $next($request);

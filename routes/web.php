@@ -2,13 +2,11 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
-use App\Http\Controllers\Admin\AuthController as AdminAuth;
-use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\ActivityLogController;
-use App\Http\Controllers\Admin\CacheController;
 
 /*
 |--------------------------------------------------------------------------
@@ -33,55 +31,114 @@ Route::prefix('demo')->group(function () {
 |--------------------------------------------------------------------------
 */
 
-$registerAdminRoutes = function () {
-    Route::get('/login', [AdminAuth::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [AdminAuth::class, 'login'])->name('login.submit');
-    Route::post('/logout', [AdminAuth::class, 'logout'])->name('logout');
+// Direct Redirects to /admin/login
+Route::get('admin', fn() => redirect()->route('login'));
+Route::get('login', fn() => redirect()->route('login'));
 
-    Route::middleware('admin.auth')->group(function () {
-        Route::get('/', function (\Illuminate\Http\Request $request) {
-            $route = $request->is('demo*') ? 'demo.admin.dashboard' : 'admin.dashboard';
-            return redirect()->route($route);
-        });
-        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+// Guest Auth Routes
+Route::controller(AdminController::class)->group(function () {
+    Route::get('admin/login', 'LoginForm')->name('login');
+    Route::post('admin/login', 'login')->name('login.submit');
+});
 
-        // Users Management
-        Route::prefix('users')->as('users.')->group(function () {
-            Route::get('/', [UserController::class, 'index'])->name('index')->middleware('permission:users.view');
-            Route::get('/create', [UserController::class, 'create'])->name('create')->middleware('permission:users.create');
-            Route::post('/', [UserController::class, 'store'])->name('store')->middleware('permission:users.create');
-            Route::get('/{user}/edit', [UserController::class, 'edit'])->name('edit')->middleware('permission:users.edit');
-            Route::put('/{user}', [UserController::class, 'update'])->name('update')->middleware('permission:users.edit');
-            Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy')->middleware('permission:users.delete');
-            Route::patch('/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('toggle-status')->middleware('permission:users.edit');
-        });
+// Authenticated Admin Routes
+Route::middleware(['admin.auth'])->group(function () {
 
-        // Roles Management
-        Route::prefix('roles')->as('roles.')->group(function () {
-            Route::get('/', [RoleController::class, 'index'])->name('index')->middleware('permission:roles.view');
-            Route::get('/create', [RoleController::class, 'create'])->name('create')->middleware('permission:roles.create');
-            Route::post('/', [RoleController::class, 'store'])->name('store')->middleware('permission:roles.create');
-            Route::get('/{role}/edit', [RoleController::class, 'edit'])->name('edit')->middleware('permission:roles.edit');
-            Route::put('/{role}', [RoleController::class, 'update'])->name('update')->middleware('permission:roles.edit');
-            Route::delete('/{role}', [RoleController::class, 'destroy'])->name('destroy')->middleware('permission:roles.delete');
-        });
-
-        // Permissions Management
-        Route::prefix('permissions')->as('permissions.')->group(function () {
-            Route::get('/', [PermissionController::class, 'index'])->name('index')->middleware('permission:permissions.view');
-        });
-
-        // Audit Trail Activity Logs
-        Route::prefix('logs')->as('logs.')->group(function () {
-            Route::get('/', [ActivityLogController::class, 'index'])->name('index')->middleware('permission:logs.view');
-            Route::get('/{log}', [ActivityLogController::class, 'show'])->name('show')->middleware('permission:logs.view');
-            Route::post('/clear', [ActivityLogController::class, 'clear'])->name('clear')->middleware('permission:logs.clear');
-        });
-
-        // System Cache Clear
-        Route::post('/cache-clear', [CacheController::class, 'clear'])->name('cache.clear')->middleware('permission:system.cache_clear');
+    // Dashboard, Logout & System Utilities
+    Route::controller(AdminController::class)->group(function () {
+        Route::get('admin/dashboard', 'index')->name('dashboard');
+        Route::post('logout', 'logout')->name('logout');
+        Route::match(['get', 'post'], 'clear-cache', 'clearcache')->name('clearcache');
+        Route::get('site-down', 'siteDown')->name('site.down');
+        Route::get('site-up', 'siteUp')->name('site.up');
     });
-};
 
-Route::prefix('admin')->as('admin.')->group($registerAdminRoutes);
-Route::prefix('demo/admin')->as('demo.admin.')->group($registerAdminRoutes);
+    // Users Management
+    Route::prefix('users')->name('users.')->controller(UserController::class)->group(function () {
+        Route::get('/', 'index')->name('index')->middleware('permission:users.view');
+        Route::post('/', 'store')->name('store')->middleware('permission:users.create');
+        Route::put('/{id}', 'update')->name('update')->middleware('permission:users.edit');
+        Route::match(['get', 'delete'], '/delete/{id}', 'destroy')->name('destroy')->middleware('permission:users.delete');
+        Route::patch('/{user}/toggle-status', 'toggleStatus')->name('toggle-status')->middleware('permission:users.edit');
+    });
+
+    Route::prefix('admin/users')->controller(UserController::class)->group(function () {
+        Route::get('/', 'index')->middleware('permission:users.view');
+        Route::post('/', 'store')->middleware('permission:users.create');
+        Route::put('/{id}', 'update')->middleware('permission:users.edit');
+        Route::match(['get', 'delete'], '/delete/{id}', 'destroy')->middleware('permission:users.delete');
+    });
+
+    // Roles Management (Supports both 'roles' and 'roles.index')
+    Route::prefix('roles')->controller(RoleController::class)->group(function () {
+        Route::get('/', 'index')->name('roles')->middleware('permission:roles.view');
+        Route::get('/list', 'index')->name('roles.index')->middleware('permission:roles.view');
+        Route::post('/store', 'store')->name('roles.store')->middleware('permission:roles.create');
+        Route::get('/{id}/edit', 'edit')->name('roles.edit')->middleware('permission:roles.edit');
+        Route::match(['post', 'put'], '/{id}/update', 'update')->name('roles.update')->middleware('permission:roles.edit');
+        Route::match(['get', 'delete'], '/{id}/delete', 'destroy')->name('roles.delete')->middleware('permission:roles.delete');
+    });
+
+    Route::prefix('admin/roles')->controller(RoleController::class)->group(function () {
+        Route::get('/', 'index')->middleware('permission:roles.view');
+        Route::post('/store', 'store')->middleware('permission:roles.create');
+        Route::match(['post', 'put'], '/{id}/update', 'update')->middleware('permission:roles.edit');
+        Route::match(['get', 'delete'], '/{id}/delete', 'destroy')->middleware('permission:roles.delete');
+    });
+
+    // Permissions Management (Supports both 'permissions' and 'permissions.index')
+    Route::prefix('permissions')->controller(PermissionController::class)->group(function () {
+        Route::get('/', 'index')->name('permissions')->middleware('permission:permissions.view');
+        Route::get('/list', 'index')->name('permissions.index')->middleware('permission:permissions.view');
+        Route::post('/store', 'store')->name('permissions.store')->middleware('permission:permissions.create');
+        Route::get('/edit/{id}', 'edit')->name('permissions.edit')->middleware('permission:permissions.edit');
+        Route::match(['post', 'put'], '/update/{id}', 'update')->name('permissions.update')->middleware('permission:permissions.edit');
+        Route::match(['get', 'delete'], '/delete/{id}', 'destroy')->name('permissions.delete')->middleware('permission:permissions.delete');
+    });
+
+    Route::prefix('admin/permissions')->controller(PermissionController::class)->group(function () {
+        Route::get('/', 'index')->middleware('permission:permissions.view');
+        Route::post('/store', 'store')->middleware('permission:permissions.create');
+        Route::match(['post', 'put'], '/update/{id}', 'update')->middleware('permission:permissions.edit');
+        Route::match(['get', 'delete'], '/delete/{id}', 'destroy')->middleware('permission:permissions.delete');
+    });
+
+    // Audit Trail Activity Logs
+    Route::prefix('admin/logs')->name('logs.')->controller(ActivityLogController::class)->group(function () {
+        Route::get('/', 'index')->name('index')->middleware('permission:logs.view');
+        Route::get('/{log}', 'show')->name('show')->middleware('permission:logs.view');
+        Route::post('/clear', 'clear')->name('clear')->middleware('permission:logs.clear');
+    });
+
+    Route::prefix('logs')->controller(ActivityLogController::class)->group(function () {
+        Route::get('/', 'index')->middleware('permission:logs.view');
+        Route::get('/{log}', 'show')->middleware('permission:logs.view');
+        Route::post('/clear', 'clear')->middleware('permission:logs.clear');
+    });
+
+    // Alias routes for testing and backwards compatibility
+    Route::name('admin.')->group(function () {
+        Route::get('admin/login-alias', fn() => redirect()->route('login'))->name('login');
+        Route::get('admin/dash', [AdminController::class, 'index'])->name('dashboard');
+        Route::get('admin/users-list', [UserController::class, 'index'])->name('users.index');
+        Route::get('admin/roles-list', [RoleController::class, 'index'])->name('roles.index');
+        Route::get('admin/perms-list', [PermissionController::class, 'index'])->name('permissions.index');
+        Route::post('admin/cache-clear', [AdminController::class, 'clearcache'])->name('cache.clear');
+    });
+});
+
+// Demo subfolder support (/demo/admin)
+Route::prefix('demo')->group(function () {
+    Route::get('admin', fn() => redirect('demo/admin/login'));
+    Route::get('admin/login', [AdminController::class, 'LoginForm']);
+    Route::post('admin/login', [AdminController::class, 'login']);
+
+    Route::middleware(['admin.auth'])->group(function () {
+        Route::get('admin/dashboard', [AdminController::class, 'index']);
+        Route::get('admin/users', [UserController::class, 'index']);
+        Route::get('admin/roles', [RoleController::class, 'index']);
+        Route::get('admin/permissions', [PermissionController::class, 'index']);
+        Route::get('admin/logs', [ActivityLogController::class, 'index']);
+        Route::match(['get', 'post'], 'admin/clear-cache', [AdminController::class, 'clearcache']);
+    });
+});

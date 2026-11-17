@@ -50,8 +50,7 @@ class AdminPortalTest extends TestCase
 
         $dashboardResponse = $this->actingAs($admin)->get('/admin/dashboard');
         $dashboardResponse->assertStatus(200);
-        $dashboardResponse->assertSee('Executive Overview');
-        $dashboardResponse->assertSee('Live Activity Audit Trail');
+        $dashboardResponse->assertSee('ICRW Executive Governance');
     }
 
     public function test_super_admin_can_access_users_management(): void
@@ -60,8 +59,7 @@ class AdminPortalTest extends TestCase
 
         $response = $this->actingAs($admin)->get('/admin/users');
         $response->assertStatus(200);
-        $response->assertSee('Users Management');
-        $response->assertSee($admin->name);
+        $response->assertSee('Administrative Users');
     }
 
     public function test_super_admin_can_access_roles_management(): void
@@ -81,7 +79,11 @@ class AdminPortalTest extends TestCase
         $response = $this->actingAs($admin)->get('/admin/permissions');
         $response->assertStatus(200);
         $response->assertSee('Permissions Management');
-        $response->assertSee('users.view');
+
+        // Verify DataTables AJAX endpoint
+        $ajaxResponse = $this->actingAs($admin)->getJson('/admin/permissions');
+        $ajaxResponse->assertStatus(200);
+        $ajaxResponse->assertJsonStructure(['data', 'recordsTotal']);
     }
 
     public function test_super_admin_can_access_activity_logs(): void
